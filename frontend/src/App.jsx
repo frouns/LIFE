@@ -4,6 +4,7 @@ import DailyNote from './DailyNote';
 import NoteList from './NoteList';
 import NoteView from './NoteView';
 import NoteEditor from './NoteEditor';
+import TasksView from './TasksView';
 import './App.css';
 
 function App() {
@@ -11,8 +12,8 @@ function App() {
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [errorNotes, setErrorNotes] = useState(null);
   const [selectedNoteTitle, setSelectedNoteTitle] = useState(null);
-  const [viewMode, setViewMode] = useState('view'); // 'view', 'create', 'edit'
-  const [editingNote, setEditingNote] = useState(null); // The note object being edited
+  const [viewMode, setViewMode] = useState('view'); // 'view', 'create', 'edit', 'tasks'
+  const [editingNote, setEditingNote] = useState(null);
 
   const fetchNotes = async () => {
     try {
@@ -29,8 +30,10 @@ function App() {
   };
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (viewMode !== 'tasks') {
+      fetchNotes();
+    }
+  }, [viewMode]);
 
   const handleSelectNote = (title) => {
     setSelectedNoteTitle(title);
@@ -54,37 +57,43 @@ function App() {
       if (viewMode === 'edit') {
         const encodedTitle = encodeURIComponent(editingNote.title);
         await axios.put(`http://localhost:8000/api/notes/${encodedTitle}`, { content: noteData.content });
-      } else { // 'create' mode
+      } else {
         await axios.post('http://localhost:8000/api/notes', noteData);
       }
-      await fetchNotes(); // Refresh the note list
-      handleSelectNote(noteData.title); // Select the note
+      await fetchNotes();
+      handleSelectNote(noteData.title);
     } catch (error) {
       console.error('Failed to save note:', error);
-      alert('Error: Could not save the note. Please check the console for details.');
+      alert('Error: Could not save the note.');
     }
   };
 
   const renderMainContent = () => {
+    if (viewMode === 'tasks') {
+      return <TasksView />;
+    }
     if (viewMode === 'create') {
       return <NoteEditor onSave={handleSaveNote} />;
     }
     if (viewMode === 'edit') {
       return <NoteEditor onSave={handleSaveNote} note={editingNote} />;
     }
-
     if (selectedNoteTitle) {
       return <NoteView noteTitle={selectedNoteTitle} onEdit={handleEditNote} />;
     }
-
     return <DailyNote />;
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>LIFE</h1>
-        <p>Your Second Brain, Connected.</p>
+        <div>
+          <h1 onClick={() => setViewMode('view')} style={{cursor: 'pointer'}}>LIFE</h1>
+          <p>Your Second Brain, Connected.</p>
+        </div>
+        <nav>
+          <a href="#" onClick={() => setViewMode('tasks')}>All Tasks</a>
+        </nav>
       </header>
       <div className="app-container">
         <NoteList

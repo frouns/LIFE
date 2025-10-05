@@ -1,6 +1,40 @@
 import os
 import re
+import json
+import uuid
 from datetime import datetime
+from enum import Enum
+
+class TaskStatus(str, Enum):
+    TODO = "todo"
+    IN_PROGRESS = "in_progress"
+    DONE = "done"
+
+class Task:
+    """Represents a single task, linked to a source note."""
+    def __init__(self, description: str, source_note_title: str, status: TaskStatus = TaskStatus.TODO):
+        self.id = str(uuid.uuid4())
+        self.description = description
+        self.source_note_title = source_note_title
+        self.status = status
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "description": self.description,
+            "source_note_title": self.source_note_title,
+            "status": self.status.value,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        task = cls(
+            description=data["description"],
+            source_note_title=data["source_note_title"],
+            status=TaskStatus(data["status"]),
+        )
+        task.id = data["id"]
+        return task
 
 class Note:
     """Represents a single note in the knowledge base."""
@@ -16,13 +50,40 @@ class Note:
         return f"Note(title='{self.title}')"
 
 class KnowledgeBase:
-    """Manages the collection of notes."""
-    def __init__(self, note_dir: str = "notes"):
+    """Manages the collection of notes and tasks."""
+    def __init__(self, note_dir: str = "notes", tasks_file: str = "tasks.json"):
         self.note_dir = note_dir
+        self.tasks_file = tasks_file
+
         self.notes = {}
+        self.tasks = {}  # In-memory store for tasks, keyed by ID
+
         if not os.path.exists(self.note_dir):
             os.makedirs(self.note_dir)
+
+        self._load_tasks()
         self._load_notes()
+
+    def _load_tasks(self):
+        """Loads tasks from the tasks.json file."""
+        if not os.path.exists(self.tasks_file):
+            return
+        with open(self.tasks_file, "r", encoding="utf-8") as f:
+            try:
+                tasks_data = json.load(f)
+                for task_id, task_dict in tasks_data.items():
+                    self.tasks[task_id] = Task.from_dict(task_dict)
+            except json.JSONDecodeError:
+                # Handle empty or invalid JSON file
+                print(f"Warning: Could not decode JSON from {self.tasks_file}. Starting with empty task list.")
+                self.tasks = {}
+
+
+    def _save_tasks(self):
+        """Saves the current tasks to the tasks.json file."""
+        data_to_save = {task_id: task.to_dict() for task_id, task in self.tasks.items()}
+        with open(self.tasks_file, "w", encoding="utf-8") as f:
+            json.dump(data_to_save, f, indent=4)
 
     def _load_notes(self):
         """Loads all notes from the note directory."""
@@ -56,26 +117,51 @@ class KnowledgeBase:
         """Gets a note by its title."""
         return self.notes.get(title)
 
+    def _parse_and_update_tasks_from_note(self, note: Note):
+        """Parses a note's content for /todo tasks and updates the central task list."""
+        task_pattern = re.compile(r"\/todo\s+(.*)", re.MULTILINE)
+
+        # Find all task descriptions in the current note content
+        found_descriptions = set(task_pattern.findall(note.content))
+
+        # Find all existing task objects linked to this note
+        existing_tasks_for_note = [task for task in self.tasks.values() if task.source_note_title == note.title]
+        existing_descriptions = {task.description for task in existing_tasks_for_note}
+
+        # Add new tasks
+        for desc in found_descriptions - existing_descriptions:
+            new_task = Task(description=desc, source_note_title=note.title)
+            self.tasks[new_task.id] = new_task
+
+        # Remove old tasks
+        tasks_to_remove = [task for task in existing_tasks_for_note if task.description not in found_descriptions]
+        for task in tasks_to_remove:
+            del self.tasks[task.id]
+
     def create_note(self, title: str, content: str = "") -> Note:
-        """Creates a new note, saves it, and updates links."""
+        """Creates a new note, saves it, and updates links and tasks."""
         if title in self.notes:
             raise ValueError(f"Note with title '{title}' already exists.")
 
         note = Note(title, content)
         self.notes[title] = note
         self._update_links_from_note(note)
+        self._parse_and_update_tasks_from_note(note)
         self.save_note(note)
+        self._save_tasks()
         return note
 
     def update_note_content(self, title: str, new_content: str):
-        """Updates the content of a note and rebuilds links."""
+        """Updates the content of a note and rebuilds links and tasks."""
         note = self.get_note(title)
         if not note:
             raise ValueError(f"Note with title '{title}' not found.")
 
         note.content = new_content
         self._rebuild_links() # Rebuild all links to ensure consistency
+        self._parse_and_update_tasks_from_note(note)
         self.save_note(note)
+        self._save_tasks()
 
     def _update_links_from_note(self, note: Note):
         """Parses a note's content and updates links and backlinks."""

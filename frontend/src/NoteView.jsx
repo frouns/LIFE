@@ -6,43 +6,46 @@ const NoteView = ({ noteTitle, onEdit }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchNote = async () => {
     if (!noteTitle) {
       setLoading(false);
       setNote(null);
       return;
     }
 
-    const fetchNote = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const encodedTitle = encodeURIComponent(noteTitle);
-        const response = await axios.get(`http://localhost:8000/api/notes/${encodedTitle}`);
-        setNote(response.data);
-      } catch (err) {
-        setError(`Failed to fetch note: "${noteTitle}"`);
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    setError(null);
+    try {
+      const encodedTitle = encodeURIComponent(noteTitle);
+      const response = await axios.get(`http://localhost:8000/api/notes/${encodedTitle}`);
+      setNote(response.data);
+    } catch (err) {
+      setError(`Failed to fetch note: "${noteTitle}"`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchNote();
-  }, [noteTitle]); // Re-run the effect if the noteTitle prop changes.
+  }, [noteTitle]);
 
-  if (loading) {
-    return <div>Loading note...</div>;
-  }
+  const handleToggleTaskStatus = async (taskId, currentStatus) => {
+    const newStatus = currentStatus === 'done' ? 'todo' : 'done';
+    try {
+      await axios.put(`http://localhost:8000/api/tasks/${taskId}`, { status: newStatus });
+      // Refresh the note to show the updated task status
+      fetchNote();
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+      alert('Could not update task. Please try again.');
+    }
+  };
 
-  if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
-  }
-
-  if (!note) {
-    // This case can be hit if noteTitle is null or the fetch is cleared.
-    return <div>Select a note from the list to view its content.</div>;
-  }
+  if (loading) return <div>Loading note...</div>;
+  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (!note) return <div>Select a note from the list to view its content.</div>;
 
   return (
     <div>
@@ -53,6 +56,27 @@ const NoteView = ({ noteTitle, onEdit }) => {
       <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
         {note.content}
       </pre>
+
+      {note.tasks && note.tasks.length > 0 && (
+        <>
+          <hr style={{ margin: '2rem 0' }} />
+          <h3>Tasks</h3>
+          <div className="task-list">
+            {note.tasks.map((task) => (
+              <div key={task.id} className="task-item">
+                <input
+                  type="checkbox"
+                  checked={task.status === 'done'}
+                  onChange={() => handleToggleTaskStatus(task.id, task.status)}
+                />
+                <span style={{ textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>
+                  {task.description}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
