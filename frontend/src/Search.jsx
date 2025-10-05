@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from './api';
 
 const Search = ({ onSelectNote }) => {
   const [query, setQuery] = useState('');
@@ -16,7 +16,7 @@ const Search = ({ onSelectNote }) => {
     // Set a timer to wait for the user to stop typing
     const timerId = setTimeout(() => {
       setLoading(true);
-      axios.get(`http://localhost:8000/api/search?q=${query}`)
+      apiClient.get(`/api/search?q=${query}`)
         .then(response => {
           setResults(response.data);
         })

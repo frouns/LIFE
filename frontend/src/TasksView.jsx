@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from './api';
 
 const TasksView = () => {
   const [tasks, setTasks] = useState([]);
@@ -9,7 +9,7 @@ const TasksView = () => {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/api/tasks');
+      const response = await apiClient.get('/api/tasks');
       setTasks(response.data);
     } catch (err) {
       setError('Failed to fetch tasks.');
@@ -26,7 +26,7 @@ const TasksView = () => {
   const handleToggleTaskStatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'done' ? 'todo' : 'done';
     try {
-      await axios.put(`http://localhost:8000/api/tasks/${taskId}`, { status: newStatus });
+      await apiClient.put(`/api/tasks/${taskId}`, { status: newStatus });
       // Refresh the task list to show the updated status
       fetchTasks();
     } catch (error) {

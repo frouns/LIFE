@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.env
+
+# Local data and caches
+.pytest_cache/
+.coverage
+notes/
+search_index/
+tasks.json
+*.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log

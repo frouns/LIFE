@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from './api';
 import DailyNote from './DailyNote';
 import NoteList from './NoteList';
 import NoteView from './NoteView';
@@ -18,7 +18,7 @@ function App() {
   const fetchNotes = async () => {
     try {
       setLoadingNotes(true);
-      const response = await axios.get('http://localhost:8000/api/notes');
+      const response = await apiClient.get('/api/notes');
       setNotes(response.data);
       setErrorNotes(null);
     } catch (err) {
@@ -56,11 +56,11 @@ function App() {
     try {
       if (viewMode === 'edit') {
         const encodedTitle = encodeURIComponent(editingNote.title);
-        await axios.put(`http://localhost:8000/api/notes/${encodedTitle}`, { content: noteData.content });
+        await apiClient.put(`/api/notes/${encodedTitle}`, { content: noteData.content });
       } else {
-        await axios.post('http://localhost:8000/api/notes', noteData);
+        await apiClient.post('/api/notes', noteData);
       }
-      await fetchNotes();
+      await fetchNotes(); // This already uses apiClient now
       handleSelectNote(noteData.title);
     } catch (error) {
       console.error('Failed to save note:', error);

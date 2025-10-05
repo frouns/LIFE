@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from './api';
 
 const DailyNote = () => {
   const [note, setNote] = useState(null);
@@ -9,9 +9,7 @@ const DailyNote = () => {
   useEffect(() => {
     const fetchDailyNote = async () => {
       try {
-        // The backend runs on port 8000, so we need to specify the full URL.
-        // We'll configure a proxy later to simplify this.
-        const response = await axios.get('http://localhost:8000/api/notes/daily');
+        const response = await apiClient.get('/api/notes/daily');
         setNote(response.data);
       } catch (err) {
         setError('Failed to fetch the daily note. Is the backend server running?');

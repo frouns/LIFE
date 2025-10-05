@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from './api';
 import { parseContent } from './utils/contentParser';
 
 const NoteView = ({ noteTitle, onEdit, onSelectNote }) => {
@@ -18,7 +18,7 @@ const NoteView = ({ noteTitle, onEdit, onSelectNote }) => {
     setError(null);
     try {
       const encodedTitle = encodeURIComponent(noteTitle);
-      const response = await axios.get(`http://localhost:8000/api/notes/${encodedTitle}`);
+      const response = await apiClient.get(`/api/notes/${encodedTitle}`);
       setNote(response.data);
     } catch (err) {
       setError(`Failed to fetch note: "${noteTitle}"`);
@@ -35,7 +35,7 @@ const NoteView = ({ noteTitle, onEdit, onSelectNote }) => {
   const handleToggleTaskStatus = async (taskId, currentStatus) => {
     const newStatus = currentStatus === 'done' ? 'todo' : 'done';
     try {
-      await axios.put(`http://localhost:8000/api/tasks/${taskId}`, { status: newStatus });
+      await apiClient.put(`/api/tasks/${taskId}`, { status: newStatus });
       fetchNote();
     } catch (error) {
       console.error('Failed to update task status:', error);
