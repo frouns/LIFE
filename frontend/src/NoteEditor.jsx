@@ -1,8 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const NoteEditor = ({ onSave }) => {
+const NoteEditor = ({ onSave, note = null }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+    } else {
+      setTitle('');
+      setContent('');
+    }
+  }, [note]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -11,13 +21,13 @@ const NoteEditor = ({ onSave }) => {
       return;
     }
     onSave({ title, content });
-    setTitle('');
-    setContent('');
   };
+
+  const isEditing = note !== null;
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Create a New Note</h2>
+      <h2>{isEditing ? 'Edit Note' : 'Create a New Note'}</h2>
       <div style={{ marginBottom: '1rem' }}>
         <label htmlFor="note-title" style={{ display: 'block', marginBottom: '0.5rem' }}>
           Title
@@ -29,6 +39,7 @@ const NoteEditor = ({ onSave }) => {
           onChange={(e) => setTitle(e.target.value)}
           style={{ width: '100%', padding: '0.5rem' }}
           required
+          disabled={isEditing}
         />
       </div>
       <div style={{ marginBottom: '1rem' }}>

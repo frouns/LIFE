@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const NoteView = ({ noteTitle }) => {
+const NoteView = ({ noteTitle, onEdit }) => {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,10 @@ const NoteView = ({ noteTitle }) => {
 
   return (
     <div>
-      <h1>{note.title}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>{note.title}</h1>
+        <button onClick={() => onEdit(note)}>Edit</button>
+      </div>
       <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
         {note.content}
       </pre>
