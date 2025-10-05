@@ -19,81 +19,54 @@ class KnowledgeBase:
     """Manages the collection of notes."""
     def __init__(self, note_dir: str = "notes"):
         self.note_dir = note_dir
-        self.notes = {}
         if not os.path.exists(self.note_dir):
             os.makedirs(self.note_dir)
-        self._load_notes()
+        self.notes = self._load_notes()
+        self._rebuild_all_links()
 
     def _load_notes(self):
         """Loads all notes from the note directory."""
+        notes = {}
         for filename in os.listdir(self.note_dir):
             if filename.endswith(".md"):
                 title = os.path.splitext(filename)[0]
                 filepath = os.path.join(self.note_dir, filename)
                 with open(filepath, "r", encoding="utf-8") as f:
                     content = f.read()
-                note = Note(title, content)
-                self.notes[title] = note
-        self._rebuild_links()
+                notes[title] = Note(title, content)
+        return notes
 
-    def _rebuild_links(self):
-        """Rebuilds links and backlinks from note content."""
-        link_pattern = re.compile(r"\[\[(.*?)\]\]")
-        # First, clear all links and establish forward links from content
+    def _rebuild_all_links(self):
+        """Scans all notes and builds the link/backlink network."""
         for note in self.notes.values():
             note.links.clear()
             note.backlinks.clear()
-            note.links.update(link_pattern.findall(note.content))
 
-        # Second, build all backlinks
-        for note in self.notes.values():
-            for linked_title in note.links:
-                target_note = self.get_note(linked_title)
-                if target_note:
-                    target_note.backlinks.add(note.title)
+        for source_note in self.notes.values():
+            linked_titles = self._parse_links_from_content(source_note.content)
+            for target_title in linked_titles:
+                if target_title in self.notes:
+                    target_note = self.notes[target_title]
+                    source_note.links.add(target_note.title)
+                    target_note.backlinks.add(source_note.title)
 
-    def get_note(self, title: str) -> Note | None:
+    def _parse_links_from_content(self, content: str):
+        """Finds all [[wiki-style]] links in a block of text."""
+        return set(re.findall(r"\[\[(.*?)\]\]", content))
+
+    def get_note(self, title: str):
         """Gets a note by its title."""
         return self.notes.get(title)
 
-    def create_note(self, title: str, content: str = "") -> Note:
-        """Creates a new note, saves it, and updates links."""
+    def create_note(self, title: str, content: str = ""):
+        """Creates a new note, saves it, and updates the knowledge base."""
         if title in self.notes:
             raise ValueError(f"Note with title '{title}' already exists.")
 
         note = Note(title, content)
         self.notes[title] = note
-        self._update_links_from_note(note)
         self.save_note(note)
-        return note
-
-    def update_note_content(self, title: str, new_content: str):
-        """Updates the content of a note and rebuilds links."""
-        note = self.get_note(title)
-        if not note:
-            raise ValueError(f"Note with title '{title}' not found.")
-
-        note.content = new_content
-        self._rebuild_links() # Rebuild all links to ensure consistency
-        self.save_note(note)
-
-    def _update_links_from_note(self, note: Note):
-        """Parses a note's content and updates links and backlinks."""
-        link_pattern = re.compile(r"\[\[(.*?)\]\]")
-        linked_titles = set(link_pattern.findall(note.content))
-
-        # Update forward links for the current note
-        note.links = linked_titles
-
-        # Update backlinks for all other notes
-        self._rebuild_links()
-
-    def get_or_create_daily_note(self) -> Note:
-        """Gets or creates the note for the current day."""
-        today_title = datetime.now().strftime("%Y-%m-%d")
-        note = self.get_note(today_title)
-        if not note:
-            note = self.create_note(today_title, f"# Daily Note for {today_title}\n\n")
+        self._rebuild_all_links()
         return note
 
     def save_note(self, note: Note):
@@ -101,3 +74,11 @@ class KnowledgeBase:
         filepath = os.path.join(self.note_dir, f"{note.title}.md")
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(note.content)
+
+    def get_or_create_daily_note(self):
+        """Gets or creates the note for the current day."""
+        today_title = datetime.now().strftime("%Y-%m-%d")
+        note = self.get_note(today_title)
+        if not note:
+            note = self.create_note(today_title, f"# Daily Note for {today_title}\n\n")
+        return note
