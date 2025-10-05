@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { parseContent } from './utils/contentParser';
 
-const NoteView = ({ noteTitle, onEdit }) => {
+const NoteView = ({ noteTitle, onEdit, onSelectNote }) => {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +36,6 @@ const NoteView = ({ noteTitle, onEdit }) => {
     const newStatus = currentStatus === 'done' ? 'todo' : 'done';
     try {
       await axios.put(`http://localhost:8000/api/tasks/${taskId}`, { status: newStatus });
-      // Refresh the note to show the updated task status
       fetchNote();
     } catch (error) {
       console.error('Failed to update task status:', error);
@@ -53,9 +53,9 @@ const NoteView = ({ noteTitle, onEdit }) => {
         <h1>{note.title}</h1>
         <button onClick={() => onEdit(note)}>Edit</button>
       </div>
-      <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-        {note.content}
-      </pre>
+      <div className="note-content">
+        {parseContent(note.content, onSelectNote)}
+      </div>
 
       {note.tasks && note.tasks.length > 0 && (
         <>

@@ -97,3 +97,18 @@ main {
   font-size: 0.9rem;
   color: #555;
 }
+
+.wiki-link {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.wiki-link:hover {
+  color: #0056b3;
+}
+
+.note-content {
+  white-space: pre-wrap;
+  font-family: inherit;
+}

@@ -79,7 +79,7 @@ function App() {
       return <NoteEditor onSave={handleSaveNote} note={editingNote} />;
     }
     if (selectedNoteTitle) {
-      return <NoteView noteTitle={selectedNoteTitle} onEdit={handleEditNote} />;
+      return <NoteView noteTitle={selectedNoteTitle} onEdit={handleEditNote} onSelectNote={handleSelectNote} />;
     }
     return <DailyNote />;
   };
