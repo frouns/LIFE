@@ -1,5 +1,6 @@
 import React from 'react';
 import DailyNote from './DailyNote';
+import NoteList from './NoteList';
 import './App.css';
 
 function App() {
@@ -9,9 +10,12 @@ function App() {
         <h1>LIFE</h1>
         <p>Your Second Brain, Connected.</p>
       </header>
-      <main>
-        <DailyNote />
-      </main>
+      <div className="app-container">
+        <NoteList />
+        <main>
+          <DailyNote />
+        </main>
+      </div>
     </div>
   );
 }

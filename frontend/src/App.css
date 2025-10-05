@@ -40,3 +40,60 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App Layout Styles */
+.app-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 150px); /* Full height minus header */
+  text-align: left;
+}
+
+.note-list-sidebar {
+  flex: 0 0 250px; /* Sidebar width */
+  border-right: 1px solid #ccc;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.note-list-sidebar h2 {
+  margin-top: 0;
+}
+
+.note-list-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.note-list-sidebar li {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.note-list-sidebar li:hover {
+  background-color: #f0f0f0;
+}
+
+main {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.App-header {
+  border-bottom: 1px solid #ccc;
+  padding: 1rem 2rem;
+  text-align: left;
+}
+
+.App-header h1 {
+  margin: 0;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
