@@ -1,38 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 
-const NoteList = ({ onSelectNote }) => {
-  const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/notes');
-        setNotes(response.data);
-      } catch (err) {
-        setError('Failed to fetch notes.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNotes();
-  }, []);
-
-  if (loading) {
-    return <div>Loading notes...</div>;
-  }
-
-  if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
-  }
-
-  return (
-    <aside className="note-list-sidebar">
-      <h2>All Notes</h2>
+const NoteList = ({ notes, loading, error, onSelectNote, onNewNote }) => {
+  const renderContent = () => {
+    if (loading) {
+      return <div>Loading notes...</div>;
+    }
+    if (error) {
+      return <div style={{ color: 'red' }}>{error}</div>;
+    }
+    return (
       <ul>
         {notes.map((note) => (
           <li key={note.title} onClick={() => onSelectNote(note.title)}>
@@ -40,6 +16,17 @@ const NoteList = ({ onSelectNote }) => {
           </li>
         ))}
       </ul>
+    );
+  };
+
+  return (
+    <aside className="note-list-sidebar">
+      <div style={{ padding: '0 1rem', borderBottom: '1px solid #ccc', marginBottom: '1rem' }}>
+        <button onClick={onNewNote} style={{ width: '100%', marginBottom: '1rem' }}>
+          New Note
+        </button>
+      </div>
+      {renderContent()}
     </aside>
   );
 };
