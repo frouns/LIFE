@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
-import DailyNote from './DailyNote';
-import NoteList from './NoteList';
-import NoteView from './NoteView';
-import NoteEditor from './NoteEditor';
-import TasksView from './TasksView';
-import AuthStatus from './AuthStatus';
+import DailyNote from './components/DailyNote';
+import NoteList from './components/NoteList';
+import NoteView from './components/NoteView';
+import NoteEditor from './components/NoteEditor';
+import TasksView from './components/TasksView';
+import AuthStatus from './components/AuthStatus';
+import CalendarView from './components/CalendarView';
 import './App.css';
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [errorNotes, setErrorNotes] = useState(null);
   const [selectedNoteTitle, setSelectedNoteTitle] = useState(null);
-  const [viewMode, setViewMode] = useState('view'); // 'view', 'create', 'edit', 'tasks'
+  const [viewMode, setViewMode] = useState('view'); // 'view', 'create', 'edit', 'tasks', 'calendar'
   const [editingNote, setEditingNote] = useState(null);
 
   const fetchNotes = async () => {
@@ -23,15 +24,17 @@ function App() {
       setNotes(response.data);
       setErrorNotes(null);
     } catch (err) {
-      setErrorNotes('Failed to fetch notes.');
-      console.error(err);
+      if (err.response && err.response.status !== 401) {
+        setErrorNotes('Failed to fetch notes.');
+        console.error(err);
+      }
     } finally {
       setLoadingNotes(false);
     }
   };
 
   useEffect(() => {
-    if (viewMode !== 'tasks') {
+    if (viewMode !== 'tasks' && viewMode !== 'calendar') {
       fetchNotes();
     }
   }, [viewMode]);
@@ -61,7 +64,7 @@ function App() {
       } else {
         await apiClient.post('/api/notes', noteData);
       }
-      await fetchNotes(); // This already uses apiClient now
+      await fetchNotes();
       handleSelectNote(noteData.title);
     } catch (error) {
       console.error('Failed to save note:', error);
@@ -70,13 +73,16 @@ function App() {
   };
 
   const renderMainContent = () => {
+    if (viewMode === 'calendar') {
+      return <CalendarView />;
+    }
     if (viewMode === 'tasks') {
       return <TasksView />;
     }
     if (viewMode === 'create') {
       return <NoteEditor onSave={handleSaveNote} />;
     }
-    if (viewMode === 'edit') {
+    if (viewMode === 'edit')
       return <NoteEditor onSave={handleSaveNote} note={editingNote} />;
     }
     if (selectedNoteTitle) {
@@ -93,6 +99,7 @@ function App() {
           <p>Your Second Brain, Connected.</p>
         </div>
         <nav>
+          <a href="#" onClick={() => setViewMode('calendar')}>Calendar</a>
           <a href="#" onClick={() => setViewMode('tasks')}>All Tasks</a>
           <AuthStatus />
         </nav>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from './api';
+import apiClient from '../api';
 
 const AuthStatus = () => {
   const [user, setUser] = useState(null);
@@ -11,7 +11,6 @@ const AuthStatus = () => {
         const response = await apiClient.get('/api/users/me');
         setUser(response.data);
       } catch (error) {
-        // A 401 error means the user is not logged in, which is expected.
         if (error.response && error.response.status !== 401) {
           console.error("Failed to fetch user status:", error);
         }
