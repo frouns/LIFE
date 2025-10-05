@@ -1,4 +1,5 @@
 import React from 'react';
+import Search from './Search';
 
 const NoteList = ({ notes, loading, error, onSelectNote, onNewNote }) => {
   const renderContent = () => {
@@ -21,12 +22,16 @@ const NoteList = ({ notes, loading, error, onSelectNote, onNewNote }) => {
 
   return (
     <aside className="note-list-sidebar">
-      <div style={{ padding: '0 1rem', borderBottom: '1px solid #ccc', marginBottom: '1rem' }}>
+      <div className="sidebar-controls">
         <button onClick={onNewNote} style={{ width: '100%', marginBottom: '1rem' }}>
           New Note
         </button>
+        <Search onSelectNote={onSelectNote} />
       </div>
-      {renderContent()}
+      <div className="sidebar-note-list">
+        <h2>All Notes</h2>
+        {renderContent()}
+      </div>
     </aside>
   );
 };

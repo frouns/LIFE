@@ -6,8 +6,10 @@ from knowledge_base.api_models import (
     NoteCreate,
     NoteUpdate,
     Task as TaskResponse,
-    TaskUpdate
+    TaskUpdate,
+    SearchResult
 )
+from knowledge_base.search import search_notes
 
 app = FastAPI(
     title="LIFE API",
@@ -16,8 +18,8 @@ app = FastAPI(
 )
 
 # This is the single, global instance that the application will use by default.
-# The tasks_file is now specified to ensure tasks are loaded and saved.
-kb_singleton = KnowledgeBase(note_dir="notes", tasks_file="tasks.json")
+# The tasks_file and search_index_dir are now specified.
+kb_singleton = KnowledgeBase(note_dir="notes", tasks_file="tasks.json", search_index_dir="search_index")
 
 def get_kb() -> KnowledgeBase:
     """Dependency function to get the single knowledge base instance."""
@@ -102,3 +104,16 @@ def update_task_status(task_id: str, task_in: TaskUpdate, kb: KnowledgeBase = De
     task.status = task_in.status
     kb._save_tasks() # Persist the change
     return task
+
+# --- Search Endpoint ---
+
+@app.get("/api/search", response_model=List[SearchResult])
+def search(q: str, kb: KnowledgeBase = Depends(get_kb)):
+    """
+    Performs a full-text search across all notes.
+    Returns a list of matching notes with highlighted snippets.
+    """
+    if not q:
+        return []
+    results = search_notes(kb.search_index, q)
+    return results

@@ -12,6 +12,12 @@ class Task(BaseModel):
     class Config:
         from_attributes = True
 
+class SearchResult(BaseModel):
+    """Pydantic model for a single search result."""
+    title: str
+    snippet: str
+    score: float
+
 class TaskUpdate(BaseModel):
     """Pydantic model for updating a task's status."""
     status: TaskStatus

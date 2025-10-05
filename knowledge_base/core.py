@@ -4,6 +4,7 @@ import json
 import uuid
 from datetime import datetime
 from enum import Enum
+from .search import get_search_index, add_note_to_index
 
 class TaskStatus(str, Enum):
     TODO = "todo"
@@ -50,19 +51,22 @@ class Note:
         return f"Note(title='{self.title}')"
 
 class KnowledgeBase:
-    """Manages the collection of notes and tasks."""
-    def __init__(self, note_dir: str = "notes", tasks_file: str = "tasks.json"):
+    """Manages the collection of notes, tasks, and the search index."""
+    def __init__(self, note_dir: str = "notes", tasks_file: str = "tasks.json", search_index_dir: str = "search_index"):
         self.note_dir = note_dir
         self.tasks_file = tasks_file
+        self.search_index_dir = search_index_dir
 
         self.notes = {}
         self.tasks = {}  # In-memory store for tasks, keyed by ID
+        self.search_index = get_search_index(self.search_index_dir)
 
         if not os.path.exists(self.note_dir):
             os.makedirs(self.note_dir)
 
         self._load_tasks()
         self._load_notes()
+        self._build_search_index()
 
     def _load_tasks(self):
         """Loads tasks from the tasks.json file."""
@@ -96,6 +100,16 @@ class KnowledgeBase:
                 note = Note(title, content)
                 self.notes[title] = note
         self._rebuild_links()
+
+    def _build_search_index(self):
+        """Builds the search index from all notes."""
+        writer = self.search_index.writer()
+        for note in self.notes.values():
+            writer.update_document(
+                title=note.title,
+                content=note.content
+            )
+        writer.commit()
 
     def _rebuild_links(self):
         """Rebuilds links and backlinks from note content."""
@@ -139,7 +153,7 @@ class KnowledgeBase:
             del self.tasks[task.id]
 
     def create_note(self, title: str, content: str = "") -> Note:
-        """Creates a new note, saves it, and updates links and tasks."""
+        """Creates a new note, saves it, and updates links, tasks, and the search index."""
         if title in self.notes:
             raise ValueError(f"Note with title '{title}' already exists.")
 
@@ -149,10 +163,11 @@ class KnowledgeBase:
         self._parse_and_update_tasks_from_note(note)
         self.save_note(note)
         self._save_tasks()
+        add_note_to_index(self.search_index, note)
         return note
 
     def update_note_content(self, title: str, new_content: str):
-        """Updates the content of a note and rebuilds links and tasks."""
+        """Updates the content of a note and rebuilds links, tasks, and the search index."""
         note = self.get_note(title)
         if not note:
             raise ValueError(f"Note with title '{title}' not found.")
@@ -162,6 +177,7 @@ class KnowledgeBase:
         self._parse_and_update_tasks_from_note(note)
         self.save_note(note)
         self._save_tasks()
+        add_note_to_index(self.search_index, note)
 
     def _update_links_from_note(self, note: Note):
         """Parses a note's content and updates links and backlinks."""

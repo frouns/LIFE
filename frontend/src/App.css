@@ -112,3 +112,53 @@ main {
   white-space: pre-wrap;
   font-family: inherit;
 }
+
+/* Search Component Styles */
+.search-container {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+
+.search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.search-results li {
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.search-results li:hover {
+  background-color: #f0f0f0;
+}
+
+.result-title {
+  font-weight: bold;
+}
+
+.result-snippet {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.result-snippet mark {
+  background-color: #f1c40f;
+  font-weight: bold;
+}
