@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const NoteList = () => {
+const NoteList = ({ onSelectNote }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +35,7 @@ const NoteList = () => {
       <h2>All Notes</h2>
       <ul>
         {notes.map((note) => (
-          <li key={note.title}>
+          <li key={note.title} onClick={() => onSelectNote(note.title)}>
             {note.title}
           </li>
         ))}

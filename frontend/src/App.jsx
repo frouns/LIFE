@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DailyNote from './DailyNote';
 import NoteList from './NoteList';
+import NoteView from './NoteView';
 import './App.css';
 
 function App() {
+  const [selectedNoteTitle, setSelectedNoteTitle] = useState(null);
+
+  const handleSelectNote = (title) => {
+    setSelectedNoteTitle(title);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -11,9 +18,13 @@ function App() {
         <p>Your Second Brain, Connected.</p>
       </header>
       <div className="app-container">
-        <NoteList />
+        <NoteList onSelectNote={handleSelectNote} />
         <main>
-          <DailyNote />
+          {selectedNoteTitle ? (
+            <NoteView noteTitle={selectedNoteTitle} />
+          ) : (
+            <DailyNote />
+          )}
         </main>
       </div>
     </div>
