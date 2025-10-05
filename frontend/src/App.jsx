@@ -5,6 +5,7 @@ import NoteList from './NoteList';
 import NoteView from './NoteView';
 import NoteEditor from './NoteEditor';
 import TasksView from './TasksView';
+import AuthStatus from './AuthStatus';
 import './App.css';
 
 function App() {
@@ -93,6 +94,7 @@ function App() {
         </div>
         <nav>
           <a href="#" onClick={() => setViewMode('tasks')}>All Tasks</a>
+          <AuthStatus />
         </nav>
       </header>
       <div className="app-container">

@@ -2,23 +2,26 @@ from pydantic import BaseModel
 from typing import List, Optional
 from .models import TaskStatus
 
-# Pydantic models for Tasks
+# --- Task Schemas ---
 
 class TaskBase(BaseModel):
     description: str
-    status: TaskStatus = TaskStatus.TODO
 
 class TaskCreate(TaskBase):
     pass
 
+class TaskUpdate(BaseModel):
+    status: TaskStatus
+
 class Task(TaskBase):
     id: str
+    status: TaskStatus
     source_note_title: str
 
     class Config:
         orm_mode = True
 
-# Pydantic models for Notes
+# --- Note Schemas ---
 
 class NoteBase(BaseModel):
     title: str
@@ -30,7 +33,23 @@ class NoteUpdate(BaseModel):
     content: str
 
 class Note(NoteBase):
-    content: Optional[str] = ""
+    content: Optional[str]
+    tasks: List[Task] = []
+
+    class Config:
+        orm_mode = True
+
+# --- User Schemas ---
+
+class UserBase(BaseModel):
+    email: str
+
+class UserCreate(UserBase):
+    id: str # The user ID will be provided by the auth system (e.g., Google ID)
+
+class User(UserBase):
+    id: str
+    notes: List[Note] = []
     tasks: List[Task] = []
 
     class Config:

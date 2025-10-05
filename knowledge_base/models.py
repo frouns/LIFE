@@ -1,13 +1,28 @@
-from sqlalchemy import Column, String, Enum, ForeignKey
+from sqlalchemy import Column, String, Enum, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from .database import Base
 import enum
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, index=True) # e.g., from a JWT or session
+    email = Column(String, unique=True, index=True, nullable=False)
+
+    # This will store the encrypted Google OAuth 2.0 refresh token
+    google_credentials = Column(Text, nullable=True)
+
+    notes = relationship("Note", back_populates="owner")
+    tasks = relationship("Task", back_populates="owner")
 
 class Note(Base):
     __tablename__ = "notes"
 
     title = Column(String, primary_key=True, index=True)
     content = Column(String, default="")
+
+    owner_id = Column(String, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="notes")
 
     tasks = relationship("Task", back_populates="source_note")
 
@@ -25,3 +40,6 @@ class Task(Base):
 
     source_note_title = Column(String, ForeignKey("notes.title"))
     source_note = relationship("Note", back_populates="tasks")
+
+    owner_id = Column(String, ForeignKey("users.id"))
+    owner = relationship("User", back_populates="tasks")
