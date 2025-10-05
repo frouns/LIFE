@@ -8,6 +8,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from knowledge_base import models, schemas, service
 from knowledge_base.database import SessionLocal, engine, get_db
 from knowledge_base.auth_service import auth_service
+from knowledge_base.calendar_service import calendar_service
+import datetime
 
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
@@ -118,3 +120,43 @@ def update_task_status(task_id: str, status: schemas.TaskStatus, user_id: str = 
     if db_task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return db_task
+
+# --- Calendar Endpoints ---
+
+@app.get("/api/calendar/events")
+def get_calendar_events(
+    start_date: datetime.date,
+    end_date: datetime.date,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Fetches calendar events for the authenticated user within a given date range.
+    """
+    user = knowledge_service.get_user(db, user_id=user_id)
+    if not user or not user.google_credentials:
+        raise HTTPException(status_code=403, detail="User not authenticated with Google or credentials not found.")
+
+    service = calendar_service.get_calendar_service(user.google_credentials)
+    if not service:
+        raise HTTPException(status_code=500, detail="Could not create calendar service.")
+
+    # Format dates to RFC3339 timestamp format required by the Google Calendar API
+    time_min = datetime.datetime.combine(start_date, datetime.time.min).isoformat() + 'Z'
+    time_max = datetime.datetime.combine(end_date, datetime.time.max).isoformat() + 'Z'
+
+    try:
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=time_min,
+            timeMax=time_max,
+            maxResults=100,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+
+        events = events_result.get('items', [])
+        return events
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while fetching calendar events.")
